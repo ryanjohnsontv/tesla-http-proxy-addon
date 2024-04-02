@@ -3,7 +3,7 @@ import logging
 import random
 import string
 from urllib.parse import urlparse, parse_qs
-from flask import cli, Flask, render_template, request, send_from_directory
+from flask import cli, Flask, render_template, request, send_from_directory, abort
 from werkzeug.exceptions import HTTPException
 import requests
 
@@ -44,7 +44,6 @@ def handle_exception(e):
     # now you're handling non-HTTP exceptions only
     return 'Unknown Error', 500
 
-
 @app.route('/')
 def index():
     """Web UI for add-on inside Home Assistant"""
@@ -58,10 +57,15 @@ def index():
 
 @app.route('/.well-known/appspecific/com.tesla.3p.public-key.pem')
 def public_key():
-    """Serves the public key."""
     directory = "/share/tesla"
     filename = "com.tesla.3p.public-key.pem"
-    return send_from_directory(directory, filename, as_attachment=True, mimetype='application/x-pem-file')
+    file_path = os.path.join(directory, filename)
+    if os.path.isfile(file_path):
+        app.logger.info(f"File {filename} exists. Serving it now.")
+        return send_from_directory(directory, filename, as_attachment=True, mimetype='application/x-pem-file')
+    else:
+        app.logger.error(f"File {filename} does not exist.")
+        return abort(404)
 
 @app.route('/callback')
 def callback():
