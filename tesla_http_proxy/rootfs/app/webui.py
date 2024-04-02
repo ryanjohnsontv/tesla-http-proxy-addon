@@ -3,7 +3,7 @@ import logging
 import random
 import string
 from urllib.parse import urlparse, parse_qs
-from flask import cli, Flask, render_template, request
+from flask import cli, Flask, render_template, request, send_from_directory
 from werkzeug.exceptions import HTTPException
 import requests
 
@@ -56,6 +56,12 @@ def index():
     return render_template('index.html', slug=slug, domain=DOMAIN, client_id=CLIENT_ID,
         scopes=SCOPES, randomstate=randomstate, randomnonce=randomnonce)
 
+@app.route('/.well-known/appspecific/com.tesla.3p.public-key.pem')
+def public_key():
+    """Serves the public key."""
+    directory = "/share/tesla"
+    filename = "com.tesla.3p.public-key.pem"
+    return send_from_directory(directory, filename, as_attachment=True, mimetype='application/x-pem-file')
 
 @app.route('/callback')
 def callback():
